@@ -1,10 +1,12 @@
 // TODO(#1): Setting to allow keybinding to toggle chat overlay
 // TODO(#2): Setting to control opacity value
 // TODO(#3): Save the position of the chat after each move
+// TODO: Handle embedding VOD chat when watching VODs
 
 const OVERLAY_ID = 'tco-ext-element';
 const timers = [];
 const cleanupFns = [];
+let currentChannel = null;
 
 function buildTitleBar(parent) {
   const element = document.createElement('div');
@@ -60,9 +62,8 @@ function createChatOverlay(target) {
   const parent = document.createElement('div');
   parent.id = OVERLAY_ID;
 
-  // TODO(#5): Get the current stream dynamically
   const child = document.createElement('iframe');
-  child.src = 'https://www.twitch.tv/popout/shroud/chat';
+  child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
 
   function updateFrameElement(selector, prop, value) {
     const element = child.contentDocument.querySelector(selector);
@@ -72,11 +73,12 @@ function createChatOverlay(target) {
   }
 
   function onEnter() {
-    updateFrameElement('.chat-input', 'style', 'display: block !important;');
+    updateFrameElement('.chat-input', 'style', 'display: block !important');
   }
 
   function onLeave() {
-    updateFrameElement('.chat-input', 'style', 'display: none !important;');
+    // TODO: Don't hide input if the input is focused
+    updateFrameElement('.chat-input', 'style', 'display: none !important');
   }
 
   child.addEventListener('load', onLeave);
@@ -94,7 +96,6 @@ function destroyChatOverlay() {
   if (element) {
     element.remove();
   }
-
   for (const func of cleanupFns) {
     func();
   }
@@ -118,7 +119,7 @@ function mutationCallback(mutationsList) {
 
 // Look for the Twitch video player on the page. If it exists
 // then we observe it for changes.
-function searchForPlayer() {
+function findVideoPlayer() {
   const timer = setInterval(function() {
     // There may be multiple video players on a single page.
     const elements = document.getElementsByClassName('video-player');
@@ -132,10 +133,10 @@ function searchForPlayer() {
   timers.push(timer);
 }
 
-// Find the React instance on Twitch and look for route changes
-function searchForReact() {
-  function reactNavigationHook(node) {
-    const history = node.stateNode.props.history;
+// Get access to the React instance on Twitch
+function hookIntoReact() {
+  // Watch for navigation changes within the React app
+  function reactNavigationHook(history) {
     let lastPathName = history.location.pathname;
     const timer = setInterval(function() {
       const location = history.location;
@@ -148,36 +149,62 @@ function searchForReact() {
     timers.push(timer);
   }
 
-  const timer = setInterval(function() {
-    // @Firefox - Does this work in Chrome?
-    const reactRoot = document.getElementById('root').wrappedJSObject;
-    if (
-      reactRoot &&
-      reactRoot._reactRootContainer &&
-      reactRoot._reactRootContainer._internalRoot &&
-      reactRoot._reactRootContainer._internalRoot.current
-    ) {
-      const reactInstance = reactRoot._reactRootContainer._internalRoot.current;
-      // Search the children of `reactInstance` to find a node that has
-      // the `history` prop available.
-      function searchForRouter(node) {
-        if (node.stateNode && node.stateNode.props && node.stateNode.props.history) {
-          reactNavigationHook(node);
-        } else if (node.child) {
-          searchForRouter(node.child);
+  // Find a property within the React component tree
+  function findReactProp(node, prop, func) {
+    if (node.stateNode && node.stateNode.props && node.stateNode.props[prop]) {
+      func(node.stateNode.props[prop]);
+    } else if (node.child) {
+      let child = node.child;
+      while (child) {
+        findReactProp(child, prop, func);
+        child = child.sibling;
+      }
+    }
+  }
+
+  // Find the react instance of a element
+  function findReactInstance(element, target, func) {
+    const timer = setInterval(function() {
+      // @Firefox - Does this work in Chrome?
+      const reactRoot = document.getElementById(element).wrappedJSObject;
+      if (reactRoot) {
+        let reactInstance = null;
+        for (const key of Object.keys(reactRoot)) {
+          if (key.startsWith(target)) {
+            reactInstance = reactRoot[key];
+            break;
+          }
+        }
+        if (reactInstance) {
+          func(reactInstance);
+          clearInterval(timer);
         }
       }
-      searchForRouter(reactInstance);
-      searchForPlayer();
-      clearInterval(timer);
+    }, 500);
+    timers.push(timer);
+  }
+
+  // Find the root instance and hook into the router history
+  findReactInstance('root', '_reactRootContainer', function(instance) {
+    if (instance._internalRoot && instance._internalRoot.current) {
+      findReactProp(instance._internalRoot.current, 'history', reactNavigationHook);
     }
-  }, 500);
-  timers.push(timer);
+  });
+
+  // Find the instance related to the video player to find the current stream
+  findReactInstance('default-player', '__reactInternalInstance$', function(instance) {
+    findReactProp(instance, 'player', function(player) {
+      if (player.channel) {
+        currentChannel = player.channel;
+        findVideoPlayer();
+      }
+    });
+  });
 }
 
 function start() {
   window.addEventListener('beforeunload', cleanup);
-  searchForReact();
+  hookIntoReact();
 }
 
 function cleanup() {
