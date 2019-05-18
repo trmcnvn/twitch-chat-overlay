@@ -1,7 +1,7 @@
 // TODO(#1): Setting to allow keybinding to toggle chat overlay
 // TODO(#2): Setting to control opacity value
 // TODO(#6): Handle embedding VOD chat when watching VODs
-// TODO: Allow resizing the chat
+// TODO(#7): Allow resizing the chat
 
 const OVERLAY_ID = 'tco-ext-element';
 const OVERLAY_TITLEBAR_ID = 'tco-ext-element-titlebar';
