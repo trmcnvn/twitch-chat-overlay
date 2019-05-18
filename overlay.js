@@ -26,7 +26,7 @@ function buildTitleBar(parent) {
       if (items.transformX && items.transformY) {
         transformX = items.transformX;
         transformY = items.transformY;
-        parent.setAttribute('style', `transform: translate(${items.transformX}px, ${items.transformY}px)`);
+        parent.style.transform = `translate(${items.transformX}px, ${items.transformY}px)`;
       }
     })
     .catch(function() {});
@@ -36,7 +36,7 @@ function buildTitleBar(parent) {
     if (isDragging) {
       requestAnimationFrame(dragUpdate);
     }
-    parent.setAttribute('style', `transform: translate(${transformX}px, ${transformY}px)`);
+    parent.style.transform = `translate(${transformX}px, ${transformY}px)`;
   }
 
   function onMouseDown(event) {
@@ -73,14 +73,16 @@ function buildTitleBar(parent) {
   return element;
 }
 
-function buildToggleControl(parent) {
+// Add button to the player controls that can be used to toggle
+// the overlayed chat window
+function buildToggleControl(parent, initialState) {
   const element = document.createElement('button');
   element.classList.add('player-button');
   element.id = OVERLAY_BUTTON_ID;
   element.type = 'button';
 
   // Toggle code
-  let state = true;
+  let state = initialState;
   function onClick() {
     if (state) {
       parent.style.visibility = 'hidden';
@@ -88,6 +90,7 @@ function buildToggleControl(parent) {
       parent.style.visibility = 'visible';
     }
     state = !state;
+    browser.storage.local.set({ visibility: state }).catch(function() {});
   }
   element.addEventListener('click', onClick);
 
@@ -114,12 +117,20 @@ function createChatOverlay(target) {
   const parent = document.createElement('div');
   parent.id = OVERLAY_ID;
 
+  // Initial visibility state
+  browser.storage.local
+    .get('visibility')
+    .then(function({ visibility }) {
+      buildToggleControl(parent, visibility);
+      if (visibility !== null && visibility !== undefined) {
+        parent.style.visibility = visibility ? 'visible' : 'hidden';
+      }
+    })
+    .catch(function() {});
+
   // Build the embedded element
   const child = document.createElement('iframe');
   child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
-
-  // Build the toggle control
-  buildToggleControl(parent);
 
   function updateFrameElement(selector, prop, value) {
     const element = child.contentDocument.querySelector(selector);
