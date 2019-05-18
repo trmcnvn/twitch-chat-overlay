@@ -1,19 +1,105 @@
-const TARGET_CLASS = 'video-player--fullscreen';
-const timers = [];
+// TODO: Setting to allow keybinding to toggle chat overlay
+// TODO: Setting to control opacity value
+// TODO: Save the position of the chat after each move
 
+const OVERLAY_ID = 'tco-ext-element';
+const timers = [];
+const cleanupFns = [];
+
+function buildTitleBar(parent) {
+  const element = document.createElement('div');
+  element.id = `${OVERLAY_ID}-titlebar`;
+
+  // TODO: Build the close button
+
+  // Implement dragging of the chat window
+  let isDragging = false;
+  let startX, startY, transformX, transformY;
+
+  // RAF function for updating the transform style
+  function dragUpdate() {
+    if (isDragging) {
+      requestAnimationFrame(dragUpdate);
+    }
+    parent.setAttribute(
+      'style',
+      `transform: translate(${transformX}px, ${transformY}px)`
+    );
+  }
+
+  function onMouseDown(event) {
+    isDragging = true;
+    startX = event.pageX - transformX || 0;
+    startY = event.pageY - transformY || 0;
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    requestAnimationFrame(dragUpdate);
+  }
+
+  function onMouseUp() {
+    isDragging = false;
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+  }
+
+  function onMouseMove(event) {
+    transformX = event.pageX - startX;
+    transformY = event.pageY - startY;
+  }
+  element.addEventListener('mousedown', onMouseDown);
+
+  // We want to cleanup window based events when we cleanup
+  cleanupFns.push(function() {
+    window.removeEventListener('mouseup', onMouseUp);
+    window.removeEventListener('mousemove', onMouseMove);
+  });
+
+  return element;
+}
+
+// Load up the current Twitch chat as an overlay on the stream
 function createChatOverlay(target) {
   const parent = document.createElement('div');
-  parent.id = 'toc-ext-element';
+  parent.id = OVERLAY_ID;
+
+  // TODO: Get the current stream dynamically
   const child = document.createElement('iframe');
-  child.src = 'https://www.twitch.tv/popout/reckful/chat';
+  child.src = 'https://www.twitch.tv/popout/shroud/chat';
+
+  function updateFrameElement(selector, prop, value) {
+    const element = child.contentDocument.querySelector(selector);
+    if (element) {
+      element[prop] = value;
+    }
+  }
+
+  function onEnter() {
+    updateFrameElement('.chat-input', style, 'display: block !important;');
+  }
+
+  function onLeave() {
+    updateFrameElement('.chat-input', style, 'display: none !important;');
+  }
+
+  child.addEventListener('load', onLeave);
+  child.addEventListener('mouseenter', onEnter);
+  child.addEventListener('mouseleave', onLeave);
+
+  parent.appendChild(buildTitleBar(parent));
   parent.appendChild(child);
   target.appendChild(parent);
 }
 
+// ...
 function destroyChatOverlay() {
-  const element = document.getElementById('toc-ext-element');
+  const element = document.getElementById(OVERLAY_ID);
   if (element) {
     element.remove();
+  }
+
+  for (const func of cleanupFns) {
+    func();
   }
 }
 
@@ -24,7 +110,7 @@ const observer = new MutationObserver(mutationCallback);
 function mutationCallback(mutationsList) {
   for (const mutation of mutationsList) {
     const element = mutation.target;
-    if (element.classList.contains(TARGET_CLASS)) {
+    if (element.classList.contains('video-player--fullscreen')) {
       const fsElement = element.querySelector('.video-player__container');
       createChatOverlay(fsElement);
     } else {
@@ -33,11 +119,11 @@ function mutationCallback(mutationsList) {
   }
 }
 
-// ...
+// Look for the Twitch video player on the page. If it exists
+// then we observe it for changes.
 function searchForPlayer() {
   const timer = setInterval(function() {
     // There may be multiple video players on a single page.
-    // For example with the new Squad feature.
     const elements = document.getElementsByClassName('video-player');
     if (elements.length > 0) {
       for (const element of elements) {
@@ -49,10 +135,9 @@ function searchForPlayer() {
   timers.push(timer);
 }
 
-// Find the React instance on Twitch and look for routing changes
+// Find the React instance on Twitch and look for route changes
 function searchForReact() {
   function reactNavigationHook(node) {
-    // TODO: `history.listen` wasn't working here on initial testing. Why not?
     const history = node.stateNode.props.history;
     let lastPathName = history.location.pathname;
     const timer = setInterval(function() {
@@ -108,7 +193,6 @@ function cleanup() {
   for (const timer of timers) {
     clearInterval(timer);
   }
-  window.removeEventListener('beforeunload', cleanup);
 }
 
 // Hello, World!
