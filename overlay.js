@@ -3,15 +3,17 @@
 // TODO: Handle embedding VOD chat when watching VODs
 
 const OVERLAY_ID = 'tco-ext-element';
+const OVERLAY_TITLEBAR_ID = 'tco-ext-element-titlebar';
+const OVERLAY_BUTTON_ID = 'tco-ext-element-button';
+
 const timers = [];
 const cleanupFns = [];
+
 let currentChannel = null;
 
 function buildTitleBar(parent) {
   const element = document.createElement('div');
-  element.id = `${OVERLAY_ID}-titlebar`;
-
-  // TODO(#4): Build the close button
+  element.id = OVERLAY_TITLEBAR_ID;
 
   // Implement dragging of the chat window
   let isDragging = false;
@@ -71,6 +73,42 @@ function buildTitleBar(parent) {
   return element;
 }
 
+function buildToggleControl(parent) {
+  const element = document.createElement('button');
+  element.classList.add('player-button');
+  element.id = OVERLAY_BUTTON_ID;
+  element.type = 'button';
+
+  // Toggle code
+  let state = true;
+  function onClick() {
+    if (state) {
+      parent.style.visibility = 'hidden';
+    } else {
+      parent.style.visibility = 'visible';
+    }
+    state = !state;
+  }
+  element.addEventListener('click', onClick);
+
+  // Icon
+  const icon = document.createElement('span');
+  icon.innerHTML =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+
+  // Tooltip
+  const tooltip = document.createElement('span');
+  tooltip.classList.add('player-tip');
+  tooltip.dataset.tip = 'Toggle Chat Overlay';
+
+  const target = document.querySelector('#default-player .player-buttons-right');
+  if (target) {
+    element.appendChild(icon);
+    element.appendChild(tooltip);
+    target.prepend(element);
+  }
+}
+
 // Load up the current Twitch chat as an overlay on the stream
 function createChatOverlay(target) {
   const parent = document.createElement('div');
@@ -79,6 +117,9 @@ function createChatOverlay(target) {
   // Build the embedded element
   const child = document.createElement('iframe');
   child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
+
+  // Build the toggle control
+  buildToggleControl(parent);
 
   function updateFrameElement(selector, prop, value) {
     const element = child.contentDocument.querySelector(selector);
@@ -104,12 +145,20 @@ function createChatOverlay(target) {
   target.appendChild(parent);
 }
 
-// ...
 function destroyChatOverlay() {
+  // Remove the chat overlay element
   const element = document.getElementById(OVERLAY_ID);
   if (element) {
     element.remove();
   }
+
+  // Remove the player controls button
+  const button = document.getElementById(OVERLAY_BUTTON_ID);
+  if (button) {
+    button.remove();
+  }
+
+  // Cleanup anything that is left
   for (const func of cleanupFns) {
     func();
   }
