@@ -1,6 +1,5 @@
 // TODO(#1): Setting to allow keybinding to toggle chat overlay
 // TODO(#2): Setting to control opacity value
-// TODO(#3): Save the position of the chat after each move
 // TODO: Handle embedding VOD chat when watching VODs
 
 const OVERLAY_ID = 'tco-ext-element';
@@ -17,6 +16,18 @@ function buildTitleBar(parent) {
   // Implement dragging of the chat window
   let isDragging = false;
   let startX, startY, transformX, transformY;
+
+  // Attempt to get the saved positions from storage
+  browser.storage.local
+    .get(['transformX', 'transformY'])
+    .then(function(items) {
+      if (items.transformX && items.transformY) {
+        transformX = items.transformX;
+        transformY = items.transformY;
+        parent.setAttribute('style', `transform: translate(${items.transformX}px, ${items.transformY}px)`);
+      }
+    })
+    .catch(function() {});
 
   // RAF function for updating the transform style
   function dragUpdate() {
@@ -40,6 +51,9 @@ function buildTitleBar(parent) {
     isDragging = false;
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
+
+    // Save position to storage
+    browser.storage.local.set({ transformX, transformY }).catch(function() {});
   }
 
   function onMouseMove(event) {
@@ -62,6 +76,7 @@ function createChatOverlay(target) {
   const parent = document.createElement('div');
   parent.id = OVERLAY_ID;
 
+  // Build the embedded element
   const child = document.createElement('iframe');
   child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
 
@@ -77,7 +92,6 @@ function createChatOverlay(target) {
   }
 
   function onLeave() {
-    // TODO: Don't hide input if the input is focused
     updateFrameElement('.chat-input', 'style', 'display: none !important');
   }
 
@@ -129,7 +143,7 @@ function findVideoPlayer() {
       }
       clearInterval(timer);
     }
-  }, 1000);
+  }, 500);
   timers.push(timer);
 }
 

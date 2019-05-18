@@ -10,6 +10,8 @@
     "96": "resources/icon-96.svg"
   },
 
+  "permissions": ["storage"],
+
   "content_scripts": [
     {
       "matches": ["*://*.twitch.tv/*"],
