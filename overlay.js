@@ -63,7 +63,7 @@ function createChatOverlay(target) {
   const parent = document.createElement('div');
   parent.id = OVERLAY_ID;
 
-  // TODO: Get the current stream dynamically
+  // TODO(#5): Get the current stream dynamically
   const child = document.createElement('iframe');
   child.src = 'https://www.twitch.tv/popout/shroud/chat';
 
