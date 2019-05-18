@@ -72,16 +72,16 @@ function createChatOverlay(target) {
   }
 
   function onEnter() {
-    updateFrameElement('.chat-input', style, 'display: block !important;');
+    updateFrameElement('.chat-input', 'style', 'display: block !important;');
   }
 
   function onLeave() {
-    updateFrameElement('.chat-input', style, 'display: none !important;');
+    updateFrameElement('.chat-input', 'style', 'display: none !important;');
   }
 
   child.addEventListener('load', onLeave);
-  child.addEventListener('mouseenter', onEnter);
-  child.addEventListener('mouseleave', onLeave);
+  parent.addEventListener('mouseenter', onEnter);
+  parent.addEventListener('mouseleave', onLeave);
 
   parent.appendChild(buildTitleBar(parent));
   parent.appendChild(child);
