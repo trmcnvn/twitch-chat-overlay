@@ -1,4 +1,4 @@
-// TODO: Setting to allow keybinding to toggle chat overlay
+// TODO(#1): Setting to allow keybinding to toggle chat overlay
 // TODO: Setting to control opacity value
 // TODO: Save the position of the chat after each move
 
