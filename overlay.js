@@ -1,6 +1,6 @@
 // TODO(#1): Setting to allow keybinding to toggle chat overlay
 // TODO(#2): Setting to control opacity value
-// TODO: Save the position of the chat after each move
+// TODO(#3): Save the position of the chat after each move
 
 const OVERLAY_ID = 'tco-ext-element';
 const timers = [];
