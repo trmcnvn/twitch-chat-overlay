@@ -3,8 +3,15 @@
 
   width: 400px;
   height: 800px;
+  min-width: 200px;
+  min-height: 400px;
 
+  padding-bottom: 2rem;
   opacity: 0.7;
+
+  resize: both;
+  overflow: auto;
+  overflow-y: hidden;
 }
 
 #tco-ext-element:hover {

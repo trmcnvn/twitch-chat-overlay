@@ -12,6 +12,29 @@ const cleanupFns = [];
 
 let currentChannel = null;
 
+// Create a mutation observer so we can watch target elements
+// for attribute changes and detect when the user has gone into
+// fullscreen mode
+const observer = new MutationObserver(mutationCallback);
+function mutationCallback(mutationsList) {
+  for (const mutation of mutationsList) {
+    const element = mutation.target;
+    if (element.id === OVERLAY_ID) {
+      const style = element.getAttribute('style');
+      if (style !== null && style.length > 0) {
+        browser.storage.local.set({ style }).catch(function() {});
+      }
+    } else {
+      if (element.classList.contains('video-player--fullscreen')) {
+        const fsElement = element.querySelector('.video-player__container');
+        createChatOverlay(fsElement);
+      } else {
+        destroyChatOverlay();
+      }
+    }
+  }
+}
+
 function buildTitleBar(parent) {
   const element = document.createElement('div');
   element.id = OVERLAY_TITLEBAR_ID;
@@ -19,18 +42,6 @@ function buildTitleBar(parent) {
   // Implement dragging of the chat window
   let isDragging = false;
   let startX, startY, transformX, transformY;
-
-  // Attempt to get the saved positions from storage
-  browser.storage.local
-    .get(['transformX', 'transformY'])
-    .then(function(items) {
-      if (items.transformX && items.transformY) {
-        transformX = items.transformX;
-        transformY = items.transformY;
-        parent.style.transform = `translate(${items.transformX}px, ${items.transformY}px)`;
-      }
-    })
-    .catch(function() {});
 
   // RAF function for updating the transform style
   function dragUpdate() {
@@ -42,8 +53,16 @@ function buildTitleBar(parent) {
 
   function onMouseDown(event) {
     isDragging = true;
-    startX = event.pageX - transformX || 0;
-    startY = event.pageY - transformY || 0;
+
+    // Set initial transform values based on the position
+    if (transformX === undefined && transformY === undefined) {
+      const matches = parent.style.transform.match(/(\d+)px, (\d+)px/);
+      transformX = matches ? parseFloat(matches[1]) : 0;
+      transformY = matches ? parseFloat(matches[2]) : 0;
+    }
+
+    startX = event.pageX - transformX;
+    startY = event.pageY - transformY;
 
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
@@ -54,9 +73,6 @@ function buildTitleBar(parent) {
     isDragging = false;
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
-
-    // Save position to storage
-    browser.storage.local.set({ transformX, transformY }).catch(function() {});
   }
 
   function onMouseMove(event) {
@@ -76,22 +92,20 @@ function buildTitleBar(parent) {
 
 // Add button to the player controls that can be used to toggle
 // the overlayed chat window
-function buildToggleControl(parent, initialState) {
+function buildToggleControl(parent) {
   const element = document.createElement('button');
   element.classList.add('player-button');
   element.id = OVERLAY_BUTTON_ID;
   element.type = 'button';
 
   // Toggle code
-  let state = initialState;
   function onClick() {
-    if (state) {
+    const state = parent.style.visibility;
+    if (state === 'visible') {
       parent.style.visibility = 'hidden';
     } else {
       parent.style.visibility = 'visible';
     }
-    state = !state;
-    browser.storage.local.set({ visibility: state }).catch(function() {});
   }
   element.addEventListener('click', onClick);
 
@@ -118,16 +132,16 @@ function createChatOverlay(target) {
   const parent = document.createElement('div');
   parent.id = OVERLAY_ID;
 
-  // Initial visibility state
+  // Set the initial style to the last session
   browser.storage.local
-    .get('visibility')
-    .then(function({ visibility }) {
-      buildToggleControl(parent, visibility);
-      if (visibility !== null && visibility !== undefined) {
-        parent.style.visibility = visibility ? 'visible' : 'hidden';
-      }
+    .get(null) // null returns all keys
+    .then(function(item) {
+      parent.setAttribute('style', item.style);
     })
     .catch(function() {});
+
+  // Toggle control
+  buildToggleControl(parent);
 
   // Build the embedded element
   const child = document.createElement('iframe');
@@ -152,6 +166,10 @@ function createChatOverlay(target) {
   parent.addEventListener('mouseenter', onEnter);
   parent.addEventListener('mouseleave', onLeave);
 
+  // Observe the element for attribute changes, as the `resize` event doesn't fire
+  // when using CSS resize ???
+  observer.observe(parent, { attributes: true });
+
   parent.appendChild(buildTitleBar(parent));
   parent.appendChild(child);
   target.appendChild(parent);
@@ -173,22 +191,6 @@ function destroyChatOverlay() {
   // Cleanup anything that is left
   for (const func of cleanupFns) {
     func();
-  }
-}
-
-// Create a mutation observer so we can watch target elements
-// for attribute changes and detect when the user has gone into
-// fullscreen mode
-const observer = new MutationObserver(mutationCallback);
-function mutationCallback(mutationsList) {
-  for (const mutation of mutationsList) {
-    const element = mutation.target;
-    if (element.classList.contains('video-player--fullscreen')) {
-      const fsElement = element.querySelector('.video-player__container');
-      createChatOverlay(fsElement);
-    } else {
-      destroyChatOverlay();
-    }
   }
 }
 
