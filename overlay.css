@@ -1,0 +1,10 @@
+#toc-ext-element {
+  position: absolute;
+  width: 200px;
+  height: 400px;
+}
+
+#toc-ext-element iframe {
+  width: 100%;
+  height: 100%;
+}
