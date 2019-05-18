@@ -10,7 +10,7 @@ function buildTitleBar(parent) {
   const element = document.createElement('div');
   element.id = `${OVERLAY_ID}-titlebar`;
 
-  // TODO: Build the close button
+  // TODO(#4): Build the close button
 
   // Implement dragging of the chat window
   let isDragging = false;
