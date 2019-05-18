@@ -21,10 +21,7 @@ function buildTitleBar(parent) {
     if (isDragging) {
       requestAnimationFrame(dragUpdate);
     }
-    parent.setAttribute(
-      'style',
-      `transform: translate(${transformX}px, ${transformY}px)`
-    );
+    parent.setAttribute('style', `transform: translate(${transformX}px, ${transformY}px)`);
   }
 
   function onMouseDown(event) {
@@ -164,11 +161,7 @@ function searchForReact() {
       // Search the children of `reactInstance` to find a node that has
       // the `history` prop available.
       function searchForRouter(node) {
-        if (
-          node.stateNode &&
-          node.stateNode.props &&
-          node.stateNode.props.history
-        ) {
+        if (node.stateNode && node.stateNode.props && node.stateNode.props.history) {
           reactNavigationHook(node);
         } else if (node.child) {
           searchForRouter(node.child);
