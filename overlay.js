@@ -143,22 +143,21 @@ function createChatOverlay(target) {
   const child = document.createElement('iframe');
   child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
 
-  function updateFrameElement(selector, prop, value) {
-    const element = child.contentDocument.querySelector(selector);
-    if (element) {
-      element[prop] = value;
-    }
+  function onLoad() {
+    // Force dark mode
+    child.contentDocument.querySelector('body').classList.add('tw-root--theme-dark');
+    onLeave();
   }
 
   function onEnter() {
-    updateFrameElement('.chat-input', 'style', 'display: block !important');
+    child.contentDocument.querySelector('.chat-input').style = 'display: block !important';
   }
 
   function onLeave() {
-    updateFrameElement('.chat-input', 'style', 'display: none !important');
+    child.contentDocument.querySelector('.chat-input').style = 'display: none !important';
   }
 
-  child.addEventListener('load', onLeave);
+  child.addEventListener('load', onLoad);
   parent.addEventListener('mouseenter', onEnter);
   parent.addEventListener('mouseleave', onLeave);
 
