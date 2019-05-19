@@ -10,7 +10,7 @@ Firefox and Chrome Add-on for Twitch that will overlay the chat window while wat
 #### Install
 
 - Firefox: [https://addons.mozilla.org/en-US/firefox/addon/twitch-chat-overlay/](https://addons.mozilla.org/en-US/firefox/addon/twitch-chat-overlay/)
-- Chrome: ...
+- Chrome: [https://chrome.google.com/webstore/detail/lcljofkmbcdnjekeamikmefcjohmhgng](https://chrome.google.com/webstore/detail/lcljofkmbcdnjekeamikmefcjohmhgng)
 
 #### Screenshot
 
