@@ -1,10 +1,8 @@
-// TODO(#1): Setting to allow keybinding to toggle chat overlay
-// TODO(#2): Setting to control opacity value
-// TODO(#6): Handle embedding VOD chat when watching VODs
-
 const OVERLAY_ID = 'tco-ext-element';
 const OVERLAY_TITLEBAR_ID = 'tco-ext-element-titlebar';
 const OVERLAY_BUTTON_ID = 'tco-ext-element-button';
+
+const STORAGE_KEY = 'tco-ext:settings';
 
 const timers = [];
 const cleanupFns = [];
@@ -21,7 +19,7 @@ function mutationCallback(mutationsList) {
     if (element.id === OVERLAY_ID) {
       const style = element.getAttribute('style');
       if (style !== null && style.length > 0) {
-        browser.storage.local.set({ style }).catch(function() {});
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ style }));
       }
     } else {
       if (element.classList.contains('video-player--fullscreen')) {
@@ -132,12 +130,11 @@ function createChatOverlay(target) {
   parent.id = OVERLAY_ID;
 
   // Set the initial style to the last session
-  browser.storage.local
-    .get(null) // null returns all keys
-    .then(function(item) {
-      parent.setAttribute('style', item.style);
-    })
-    .catch(function() {});
+  const json = window.localStorage.getItem(STORAGE_KEY);
+  if (json !== null) {
+    const item = JSON.parse(json);
+    parent.setAttribute('style', item.style);
+  }
 
   // Toggle control
   buildToggleControl(parent);
@@ -241,8 +238,7 @@ function hookIntoReact() {
   // Find the react instance of a element
   function findReactInstance(element, target, func) {
     const timer = setInterval(function() {
-      // @Firefox - Does this work in Chrome?
-      const reactRoot = document.getElementById(element).wrappedJSObject;
+      const reactRoot = document.getElementById(element);
       if (reactRoot) {
         let reactInstance = null;
         for (const key of Object.keys(reactRoot)) {
