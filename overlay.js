@@ -97,7 +97,8 @@
 
     // Toggle code
     function onClick() {
-      const state = parent.style.visibility;
+      // Will only be undefined on first run, where settings aren't saved
+      const state = parent.style.visibility || 'visible';
       if (state === 'visible') {
         parent.style.visibility = 'hidden';
       } else {
