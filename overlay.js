@@ -142,11 +142,9 @@
 
     // Build the embedded element
     const child = document.createElement('iframe');
-    child.src = `https://www.twitch.tv/popout/${currentChannel}/chat`;
+    child.src = `https://www.twitch.tv/popout/${currentChannel}/chat?darkpopout`;
 
     function onLoad() {
-      // Force dark mode
-      child.contentDocument.querySelector('body').classList.add('tw-root--theme-dark');
       onLeave();
     }
 
