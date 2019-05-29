@@ -89,7 +89,7 @@
 
   // Add button to the player controls that can be used to toggle
   // the overlayed chat window
-  function buildToggleControl(parent) {
+  function buildToggleControl(player, parent) {
     const element = document.createElement('button');
     element.classList.add('player-button');
     element.id = OVERLAY_BUTTON_ID;
@@ -117,7 +117,7 @@
     tooltip.classList.add('player-tip');
     tooltip.dataset.tip = 'Toggle Chat Overlay';
 
-    const target = document.querySelector('#default-player .player-buttons-right');
+    const target = player.querySelector('.player-buttons-right');
     if (target) {
       element.appendChild(icon);
       element.appendChild(tooltip);
@@ -138,7 +138,20 @@
     }
 
     // Toggle control
-    buildToggleControl(parent);
+    buildToggleControl(target, parent);
+
+    // Is this a squad stream? If so, then we need to update the current channel
+    // Twitch provides this information via a data attribute so we don't need to hook into
+    // react at this time.
+    // NOTE: This could change.
+    const squadElement = target.parentNode && target.parentNode.parentNode && target.parentNode.parentNode.parentNode;
+    if (
+      squadElement &&
+      (squadElement.classList.contains('multi-stream-player-layout__player') ||
+        squadElement.classList.contains('multi-stream-player-layout__player-primary'))
+    ) {
+      currentChannel = squadElement.dataset['aChannel'];
+    }
 
     // Build the embedded element
     const child = document.createElement('iframe');
