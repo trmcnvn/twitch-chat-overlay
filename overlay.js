@@ -164,12 +164,20 @@
     }
 
     function createAlphaControl() {
+      // round to avoid float errors like 0.50000001
+      let opacity =  Math.floor(Number.parseFloat(getComputedStyle(overlayElement).opacity) * 100);
+      
+      // we no need opacity when mouse is over an overlay (due css) so apply managed opacity after mouse has leaved
+      overlayElement.addEventListener('mouseleave', function() {
+        overlayElement.style.opacity = opacity / 100;
+      });
+
       const btnAddAlpha = document.createElement('button');
       btnAddAlpha.innerText = '+';
       btnAddAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
       btnAddAlpha.onclick = function (e) { 
         e.stopPropagation();
-        overlayElement.style.opacity = Math.min(1, Number.parseFloat(getComputedStyle(overlayElement).opacity) + 0.1);
+        opacity = Math.min(100, opacity + 10);
         updateAlphaValue();
       };
   
@@ -178,14 +186,14 @@
       btnMinusAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
       btnMinusAlpha.onclick = function (e) { 
         e.stopPropagation();
-        overlayElement.style.opacity = Math.max(0.1, Number.parseFloat(getComputedStyle(overlayElement).opacity) - 0.1);
+        opacity = Math.max(10, opacity - 10);
         updateAlphaValue();
       };
       
       const alphaValue = document.createElement('span');
       alphaValue.style = 'flex-grow: 1';
       function updateAlphaValue() {
-        alphaValue.innerText = `Opacity: ${getComputedStyle(overlayElement).opacity * 100}%`
+        alphaValue.innerText = `Opacity: ${opacity}%`
       }
     
       updateAlphaValue();
@@ -193,8 +201,8 @@
       const alphaSettingsRow = document.createElement('div');
       alphaSettingsRow.style = 'display: flex';
       alphaSettingsRow.appendChild(alphaValue)
-      alphaSettingsRow.appendChild(btnAddAlpha)
       alphaSettingsRow.appendChild(btnMinusAlpha)
+      alphaSettingsRow.appendChild(btnAddAlpha)
 
       return alphaSettingsRow;
     }
