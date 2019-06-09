@@ -18,7 +18,7 @@
       if (element.id === OVERLAY_ID) {
         const style = element.getAttribute('style');
         if (style !== null && style.length > 0) {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ style }));
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ style: style, opacity: element.style.opacity }));
         }
       } else {
         if (element.classList.contains('video-player--fullscreen')) {
@@ -164,8 +164,16 @@
     }
 
     function createAlphaControl() {
-      // round to avoid float errors like 0.50000001
-      let opacity =  Math.floor(Number.parseFloat(getComputedStyle(overlayElement).opacity) * 100);
+      let opacity = 0.7;
+      
+      const json = window.localStorage.getItem(STORAGE_KEY);
+      if (json !== null) {
+        const item = JSON.parse(json);
+        if (item.opacity) {
+          // round to avoid float errors like 0.70000001
+          opacity = Math.floor(Number.parseFloat(item.opacity) * 100);
+        }
+      }
       
       // we no need opacity when mouse is over an overlay (due css) so apply managed opacity after mouse has leaved
       overlayElement.addEventListener('mouseleave', function() {
