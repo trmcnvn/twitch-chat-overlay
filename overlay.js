@@ -125,6 +125,88 @@
     }
   }
 
+  function createSettingsMenu(iframe) {
+    const overlayElement = document.getElementById(OVERLAY_ID);
+
+    const settingsButton = document.createElement('span');
+    settingsButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22" style="width: auto;height: 78%;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    settingsButton.title = 'Overlay Chat Settings'
+    settingsButton.className = 'player-tip tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-core-button tw-core-button--border tw-core-button--text tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative undefined';
+    settingsButton.style = 'fill: #dad8de;'
+    settingsButton.addEventListener('click', function () {
+      toggleSettingsPanel();
+    });
+
+    function toggleSettingsPanel() {
+      if (settingsPanel.classList.contains('tw-block')) {
+        settingsPanel.classList.remove('tw-block');
+        settingsPanel.classList.add('tw-hide');
+      }else {
+        settingsPanel.classList.add('tw-block');
+        settingsPanel.classList.remove('tw-hide');
+      }
+    }
+
+    function createMenuPanel() {
+          const settingsHeader = document.createElement('div')
+          settingsHeader.className = 'tw-c-background-base tw-c-text-base tw-flex-column tw-full-width tw-inline-flex tw-mg-b-1 tw-c-text-alt-2 tw-upcase'
+          settingsHeader.innerText = 'Overlay Chat Settings';
+      
+          const menuPanel = document.createElement('div')
+          menuPanel.id = 'tco-ext-element-settings';
+          menuPanel.className = 'tw-absolute tw-balloon tw-balloon--up tw-pd-2 tw-root--theme-dark tw-c-background-base tw-block'
+          menuPanel.style = 'border: 1px solid #6441a4; min-width: 200px'
+
+          menuPanel.appendChild(settingsHeader);
+          menuPanel.appendChild(createAlphaControl(menuPanel));
+
+          return menuPanel;
+    }
+
+    function createAlphaControl() {
+      const btnAddAlpha = document.createElement('button');
+      btnAddAlpha.innerText = '+';
+      btnAddAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
+      btnAddAlpha.onclick = function (e) { 
+        e.stopPropagation();
+        overlayElement.style.opacity = Math.min(1, Number.parseFloat(getComputedStyle(overlayElement).opacity) + 0.1);
+        updateAlphaValue();
+      };
+  
+      const btnMinusAlpha = document.createElement('button');
+      btnMinusAlpha.innerText = '-';
+      btnMinusAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
+      btnMinusAlpha.onclick = function (e) { 
+        e.stopPropagation();
+        overlayElement.style.opacity = Math.max(0.1, Number.parseFloat(getComputedStyle(overlayElement).opacity) - 0.1);
+        updateAlphaValue();
+      };
+      
+      const alphaValue = document.createElement('span');
+      alphaValue.style = 'flex-grow: 1';
+      function updateAlphaValue() {
+        alphaValue.innerText = `Opacity: ${getComputedStyle(overlayElement).opacity * 100}%`
+      }
+    
+      updateAlphaValue();
+  
+      const alphaSettingsRow = document.createElement('div');
+      alphaSettingsRow.style = 'display: flex';
+      alphaSettingsRow.appendChild(alphaValue)
+      alphaSettingsRow.appendChild(btnAddAlpha)
+      alphaSettingsRow.appendChild(btnMinusAlpha)
+
+      return alphaSettingsRow;
+    }
+
+
+    const settingsPanel = createMenuPanel();
+    toggleSettingsPanel();
+        
+    iframe.contentDocument.querySelector('.tw-flex.tw-flex-row > .tw-relative').appendChild(settingsPanel); 
+    iframe.contentDocument.querySelector('.tw-flex.tw-flex-row').appendChild(settingsButton); 
+  }
+
   // Load up the current Twitch chat as an overlay on the stream
   function createChatOverlay(target) {
     const parent = document.createElement('div');
@@ -158,6 +240,7 @@
     child.src = `https://www.twitch.tv/popout/${currentChannel}/chat?darkpopout`;
 
     function onLoad() {
+      createSettingsMenu(child);
       onLeave();
     }
 
@@ -168,7 +251,6 @@
     function onLeave() {
       child.contentDocument.querySelector('.chat-input').style = 'display: none !important';
     }
-
     child.addEventListener('load', onLoad);
     parent.addEventListener('mouseenter', onEnter);
     parent.addEventListener('mouseleave', onLeave);
