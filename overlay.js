@@ -164,7 +164,7 @@
     }
 
     function createAlphaControl() {
-      let opacity = 0.7;
+      let opacity = 70;
       
       const json = window.localStorage.getItem(STORAGE_KEY);
       if (json !== null) {
