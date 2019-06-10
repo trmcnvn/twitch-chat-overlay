@@ -14,10 +14,12 @@
   overflow-y: hidden;
 
   background-color: #0f0e11;
+
+  transition: opacity 0.35s ease 0s;
 }
 
 #tco-ext-element:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 #tco-ext-element iframe {
