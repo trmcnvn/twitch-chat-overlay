@@ -2,8 +2,45 @@
   const OVERLAY_ID = 'tco-ext-element';
   const OVERLAY_TITLEBAR_ID = 'tco-ext-element-titlebar';
   const OVERLAY_BUTTON_ID = 'tco-ext-element-button';
-
   const STORAGE_KEY = 'tco-ext:settings';
+  const SVG_INNER =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+
+  // Utilities
+  const utils = {
+    writeToStorage(key, value) {
+      const data = window.localStorage.getItem(STORAGE_KEY);
+      const json = JSON.parse(data);
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...(json || {}), [key]: value }));
+    },
+
+    getFromStorage(key) {
+      const data = window.localStorage.getItem(STORAGE_KEY);
+      if (data !== null) {
+        const json = JSON.parse(data);
+        return json[key] || null;
+      }
+      return null;
+    },
+
+    styleToObject(style) {
+      const styles = style.split(/; ?/).filter(str => str.length > 0);
+      const result = {};
+      for (const style of styles) {
+        const [key, value] = style.split(/: ?/);
+        result[key] = value;
+      }
+      return result;
+    },
+
+    objectToStyle(object) {
+      let style = '';
+      for (const key in object) {
+        style += `${key}: ${object[key]};`;
+      }
+      return style;
+    }
+  };
 
   const intervalIds = [];
   let currentChannel = null;
@@ -18,7 +55,8 @@
       if (element.id === OVERLAY_ID) {
         const style = element.getAttribute('style');
         if (style !== null && style.length > 0) {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ style: style, opacity: element.style.opacity }));
+          const object = utils.styleToObject(style);
+          utils.writeToStorage('style', object);
         }
       } else {
         if (element.classList.contains('video-player--fullscreen')) {
@@ -109,8 +147,7 @@
 
     // Icon
     const icon = document.createElement('span');
-    icon.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    icon.innerHTML = SVG_INNER;
 
     // Tooltip
     const tooltip = document.createElement('span');
@@ -125,102 +162,105 @@
     }
   }
 
-  function createSettingsMenu(iframe) {
-    const overlayElement = document.getElementById(OVERLAY_ID);
+  // Create button and popup menu for the user to modify various settings.
+  // TODO: Inject a stylesheet into the iframe rather than having the styles here.
+  function createSettingsMenu(parent, iframe) {
+    function createButton(target, panel) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = target.children[1].className;
+      button.innerHTML = SVG_INNER;
+      button.title = 'Overlay Chat Settings';
+      button.style = 'width: 30px; height: 30px; fill: currentColor;';
+      // SVG Styling
+      button.children[0].setAttribute('viewBox', '0 0 22 22');
+      button.children[0].style = 'height: 22px; width: auto; position: relative; left: -1px;';
 
-    const settingsButton = document.createElement('span');
-    settingsButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22" style="width: auto;height: 78%;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
-    settingsButton.title = 'Overlay Chat Settings'
-    settingsButton.className = 'player-tip tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-core-button tw-core-button--border tw-core-button--text tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative undefined';
-    settingsButton.style = 'fill: #dad8de;'
-    settingsButton.addEventListener('click', function () {
-      toggleSettingsPanel();
-    });
-
-    function toggleSettingsPanel() {
-      if (settingsPanel.classList.contains('tw-block')) {
-        settingsPanel.classList.remove('tw-block');
-        settingsPanel.classList.add('tw-hide');
-      }else {
-        settingsPanel.classList.add('tw-block');
-        settingsPanel.classList.remove('tw-hide');
-      }
-    }
-
-    function createMenuPanel() {
-          const settingsHeader = document.createElement('div')
-          settingsHeader.className = 'tw-c-background-base tw-c-text-base tw-flex-column tw-full-width tw-inline-flex tw-mg-b-1 tw-c-text-alt-2 tw-upcase'
-          settingsHeader.innerText = 'Overlay Chat Settings';
-      
-          const menuPanel = document.createElement('div')
-          menuPanel.id = 'tco-ext-element-settings';
-          menuPanel.className = 'tw-absolute tw-balloon tw-balloon--up tw-pd-2 tw-root--theme-dark tw-c-background-base tw-block'
-          menuPanel.style = 'border: 1px solid #6441a4; min-width: 200px'
-
-          menuPanel.appendChild(settingsHeader);
-          menuPanel.appendChild(createAlphaControl(menuPanel));
-
-          return menuPanel;
-    }
-
-    function createAlphaControl() {
-      let opacity = 70;
-      
-      const json = window.localStorage.getItem(STORAGE_KEY);
-      if (json !== null) {
-        const item = JSON.parse(json);
-        if (item.opacity) {
-          // round to avoid float errors like 0.70000001
-          opacity = Math.floor(Number.parseFloat(item.opacity) * 100);
+      function toggle() {
+        if (panel.classList.contains('tw-block')) {
+          panel.classList.remove('tw-block');
+          panel.classList.add('tw-hide');
+        } else {
+          panel.classList.add('tw-block');
+          panel.classList.remove('tw-hide');
         }
       }
-      
-      // we no need opacity when mouse is over an overlay (due css) so apply managed opacity after mouse has leaved
-      overlayElement.addEventListener('mouseleave', function() {
-        overlayElement.style.opacity = opacity / 100;
-      });
-
-      const btnAddAlpha = document.createElement('button');
-      btnAddAlpha.innerText = '+';
-      btnAddAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
-      btnAddAlpha.onclick = function (e) { 
-        e.stopPropagation();
-        opacity = Math.min(100, opacity + 10);
-        updateAlphaValue();
-      };
-  
-      const btnMinusAlpha = document.createElement('button');
-      btnMinusAlpha.innerText = '-';
-      btnMinusAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;'
-      btnMinusAlpha.onclick = function (e) { 
-        e.stopPropagation();
-        opacity = Math.max(10, opacity - 10);
-        updateAlphaValue();
-      };
-      
-      const alphaValue = document.createElement('span');
-      alphaValue.style = 'flex-grow: 1';
-      function updateAlphaValue() {
-        alphaValue.innerText = `Opacity: ${opacity}%`
-      }
-    
-      updateAlphaValue();
-  
-      const alphaSettingsRow = document.createElement('div');
-      alphaSettingsRow.style = 'display: flex';
-      alphaSettingsRow.appendChild(alphaValue)
-      alphaSettingsRow.appendChild(btnMinusAlpha)
-      alphaSettingsRow.appendChild(btnAddAlpha)
-
-      return alphaSettingsRow;
+      button.addEventListener('click', toggle);
+      target.appendChild(button);
     }
 
+    function createPanel(target) {
+      const panel = document.createElement('div');
+      panel.className =
+        'tw-absolute tw-balloon tw-balloon--up tw-pd-2 tw-root--theme-dark tw-c-background-base tw-hide tw-elevation-1 tw-border-b tw-border-l tw-border-r tw-border-radius-medium tw-border-t';
+      panel.style = 'min-width: 200px';
+      const header = document.createElement('div');
+      header.className =
+        'tw-c-background-base tw-c-text-base tw-flex-column tw-full-width tw-inline-flex tw-mg-b-1 tw-c-text-alt-2 tw-upcase';
+      header.innerText = 'Overlay Chat Settings';
 
-    const settingsPanel = createMenuPanel();
-    toggleSettingsPanel();
-        
-    iframe.contentDocument.querySelector('.tw-flex.tw-flex-row > .tw-relative').appendChild(settingsPanel); 
-    iframe.contentDocument.querySelector('.tw-flex.tw-flex-row').appendChild(settingsButton); 
+      // Opacity setting
+      // TODO: Conver to slider control
+      function createOpacityControl() {
+        let opacity = 70;
+        const style = utils.getFromStorage('style');
+        if (style !== null) {
+          if (style.opacity) {
+            opacity = Math.floor(Number.parseFloat(style.opacity) * 100);
+          }
+        }
+
+        function onMouseLeave() {
+          parent.style.opacity = opacity / 100;
+        }
+        parent.addEventListener('mouseleave', onMouseLeave);
+
+        const btnAddAlpha = document.createElement('button');
+        btnAddAlpha.innerText = '+';
+        btnAddAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;';
+        btnAddAlpha.onclick = function(e) {
+          e.stopPropagation();
+          opacity = Math.min(100, opacity + 10);
+          updateAlphaValue();
+        };
+
+        const btnMinusAlpha = document.createElement('button');
+        btnMinusAlpha.innerText = '-';
+        btnMinusAlpha.style = 'padding: 2px 8px;background-color: #6441a4;margin: 1px;';
+        btnMinusAlpha.onclick = function(e) {
+          e.stopPropagation();
+          opacity = Math.max(10, opacity - 10);
+          updateAlphaValue();
+        };
+
+        const alphaValue = document.createElement('span');
+        alphaValue.style = 'flex-grow: 1';
+
+        function updateAlphaValue() {
+          alphaValue.innerText = `Opacity: ${opacity}%`;
+        }
+        updateAlphaValue();
+
+        const alphaSettingsRow = document.createElement('div');
+        alphaSettingsRow.style = 'display: flex';
+        alphaSettingsRow.appendChild(alphaValue);
+        alphaSettingsRow.appendChild(btnMinusAlpha);
+        alphaSettingsRow.appendChild(btnAddAlpha);
+
+        panel.appendChild(alphaSettingsRow);
+      }
+
+      panel.appendChild(header);
+      createOpacityControl(panel);
+      target.children[0].appendChild(panel);
+      return panel;
+    }
+
+    // Add the new elements to the DOM
+    const container = iframe.contentDocument.querySelector('.chat-input__buttons-container');
+    const leftChild = container.children[0];
+    const panel = createPanel(leftChild);
+    createButton(leftChild, panel);
   }
 
   // Load up the current Twitch chat as an overlay on the stream
@@ -229,16 +269,15 @@
     parent.id = OVERLAY_ID;
 
     // Set the initial style to the last session
-    const json = window.localStorage.getItem(STORAGE_KEY);
-    if (json !== null) {
-      const item = JSON.parse(json);
-      parent.setAttribute('style', item.style);
+    const style = utils.getFromStorage('style');
+    if (style !== null) {
+      parent.setAttribute('style', utils.objectToStyle(style));
     }
 
     // Toggle control
     buildToggleControl(target, parent);
 
-    // Is this a squad stream? If so, then we need to update the current channel
+    // Is this a squad stream? If so, then we need to update the current channel.
     // Twitch provides this information via a data attribute so we don't need to hook into
     // react at this time.
     // NOTE: This could change.
@@ -256,17 +295,24 @@
     child.src = `https://www.twitch.tv/popout/${currentChannel}/chat?darkpopout`;
 
     function onLoad() {
-      createSettingsMenu(child);
+      createSettingsMenu(parent, child);
       onLeave();
     }
 
     function onEnter() {
+      if (!child.contentDocument) {
+        return;
+      }
       child.contentDocument.querySelector('.chat-input').style = 'display: block !important';
     }
 
     function onLeave() {
+      if (!child.contentDocument) {
+        return;
+      }
       child.contentDocument.querySelector('.chat-input').style = 'display: none !important';
     }
+
     child.addEventListener('load', onLoad);
     parent.addEventListener('mouseenter', onEnter);
     parent.addEventListener('mouseleave', onLeave);
@@ -395,6 +441,17 @@
     }
     if (cleanupHistoryListener !== null) {
       cleanupHistoryListener();
+    }
+  }
+
+  // Convert the legacy storage format
+  const version = utils.getFromStorage('version');
+  if (version === null) {
+    const style = utils.getFromStorage('style');
+    if (style !== undefined && typeof style === 'string') {
+      const object = utils.styleToObject(style);
+      utils.writeToStorage('style', object);
+      utils.writeToStorage('version', 1);
     }
   }
 
