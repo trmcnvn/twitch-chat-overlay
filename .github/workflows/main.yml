@@ -20,8 +20,10 @@ jobs:
           manifest: manifest.json
           api-key: ${{ secrets.FIREFOX_API_KEY }}
           api-secret: ${{ secrets.FIREFOX_API_SECRET }}
+        continue-on-error: true
       - uses: trmcnvn/chrome-addon@master
         with:
           extension: lcljofkmbcdnjekeamikmefcjohmhgng
           zip: build/twitch-chat-overlay.zip
           service: ${{ secrets.CHROME_SERVICE }}
+        continue-on-error: true
