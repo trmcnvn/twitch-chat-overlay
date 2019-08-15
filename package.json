@@ -1,0 +1,24 @@
+{
+  "name": "twitch-chat-overlay",
+  "version": "1.6.0",
+  "description": "Overlays the Twitch chat while in fullscreen",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trmcnvn/twitch-chat-overlay.git"
+  },
+  "author": "Thomas McNiven",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/trmcnvn/twitch-chat-overlay/issues"
+  },
+  "homepage": "https://github.com/trmcnvn/twitch-chat-overlay#readme",
+  "dependencies": {
+    "node-zip": "^1.1.1"
+  }
+}

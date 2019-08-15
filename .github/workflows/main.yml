@@ -1,0 +1,21 @@
+name: Build and Publish
+on:
+  push:
+    branches:
+      - release
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+      - run: npm run build
+      - uses: trmcnvn/firefox-addon@master
+        with:
+          xpi: 'build/twitch-chat-overlay.xpi'
+          manifest: 'manifest.json'
+          api-key: ${{ secrets.FIREFOX_API_KEY }}
+          api-secret: ${{ secrets.FIREFOX_API_SECRET }}
