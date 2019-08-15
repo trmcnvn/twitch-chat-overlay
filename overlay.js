@@ -163,18 +163,26 @@
   }
 
   // Create button and popup menu for the user to modify various settings.
-  // TODO: Inject a stylesheet into the iframe rather than having the styles here.
   function createSettingsMenu(parent, iframe) {
     function createButton(target, panel) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = target.children[1].className;
-      button.innerHTML = SVG_INNER;
-      button.title = 'Overlay Chat Settings';
-      button.style = 'width: 30px; height: 30px; fill: currentColor;';
-      // SVG Styling
-      button.children[0].setAttribute('viewBox', '0 0 22 22');
-      button.children[0].style = 'height: 22px; width: auto; position: relative; left: -1px;';
+      const dom = document.createElement('div');
+      dom.className = 'tw-inline-flex tw-relative tw-tooltip-wrapper';
+      dom.innerHTML = `
+        <div class="tw-z-above">
+          <button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-core-button tw-core-button--border tw-core-button--text tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative">
+            <div class="tw-align-items-center tw-flex tw-flex-grow-0">
+              <span class="tw-button-icon__icon"><div style="width: 2rem; height: 2rem;"><div class="tw-align-items-center tw-full-width tw-icon tw-icon--fill tw-inline-flex"><div class="tw-aspect tw-aspect--align-top"><div class="tw-aspect__spacer" style="padding-bottom: 100%;"></div>
+              ${SVG_INNER}
+              </div></div></div></span>
+            </div>
+          </button>
+        </div>
+        <div class="tw-tooltip tw-tooltip--align-left tw-tooltip--up" data-a-target="tw-tooltip-label" role="tooltip">Overlay Chat Settings</div>
+      `;
+
+      const svg = dom.querySelector('svg');
+      svg.style = 'fill: currentColor;';
+      svg.setAttribute('viewBox', '0 0 22 22');
 
       function toggle() {
         if (panel.classList.contains('tw-block')) {
@@ -185,8 +193,10 @@
           panel.classList.remove('tw-hide');
         }
       }
+      const button = dom.querySelector('button');
       button.addEventListener('click', toggle);
-      target.appendChild(button);
+
+      target.appendChild(dom);
     }
 
     function createPanel(target) {
