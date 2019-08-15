@@ -26,4 +26,5 @@ jobs:
           extension: lcljofkmbcdnjekeamikmefcjohmhgng
           zip: build/twitch-chat-overlay.zip
           service: ${{ secrets.CHROME_SERVICE }}
+          publisher: ${{ secrets.CHROME_PUBLISHER }}
         continue-on-error: true
