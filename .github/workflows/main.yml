@@ -15,7 +15,7 @@ jobs:
       - run: npm run build
       - uses: trmcnvn/firefox-addon@master
         with:
-          uuid: 7b312f5e-9680-436b-acc1-9b09f60e8aaa
+          uuid: '{7b312f5e-9680-436b-acc1-9b09f60e8aaa}'
           xpi: build/twitch-chat-overlay.xpi
           manifest: manifest.json
           api-key: ${{ secrets.FIREFOX_API_KEY }}
