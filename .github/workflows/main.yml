@@ -25,6 +25,7 @@ jobs:
         with:
           extension: lcljofkmbcdnjekeamikmefcjohmhgng
           zip: build/twitch-chat-overlay.zip
-          service: ${{ secrets.CHROME_SERVICE }}
-          publisher: ${{ secrets.CHROME_PUBLISHER }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
         continue-on-error: true
