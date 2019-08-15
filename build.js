@@ -23,7 +23,7 @@ function run() {
       zip.file(file, fs.readFileSync(file));
     }
     const data = zip.generate({ type: 'nodebuffer' });
-    fs.writeFileSync('build/twitch-chat-overlay.xpi', data);
+    fs.writeFileSync('build/twitch-chat-overlay.zip', data);
     console.log('🚀 build finished');
   } catch (error) {
     console.error(error.message);
