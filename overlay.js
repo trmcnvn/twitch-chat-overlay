@@ -44,6 +44,7 @@
 
   const intervalIds = [];
   let currentChannel = null;
+  let isFullscreen = false;
 
   // Create a mutation observer so we can watch target elements
   // for attribute changes and detect when the user has gone into
@@ -57,13 +58,6 @@
         if (style !== null && style.length > 0) {
           const object = utils.styleToObject(style);
           utils.writeToStorage('style', object);
-        }
-      } else {
-        if (element.classList.contains('video-player--fullscreen')) {
-          const fsElement = element.querySelector('.video-player__container');
-          createChatOverlay(fsElement);
-        } else {
-          destroyChatOverlay();
         }
       }
     }
@@ -129,7 +123,7 @@
   // the overlayed chat window
   function buildToggleControl(player, parent) {
     const element = document.createElement('button');
-    element.classList.add('player-button');
+    element.classList.add(...['tw-inline-flex', 'tw-relative', 'tw-tooltip-wrapper']);
     element.id = OVERLAY_BUTTON_ID;
     element.type = 'button';
 
@@ -150,11 +144,12 @@
     icon.innerHTML = SVG_INNER;
 
     // Tooltip
-    const tooltip = document.createElement('span');
-    tooltip.classList.add('player-tip');
-    tooltip.dataset.tip = 'Toggle Chat Overlay';
+    const tooltip = document.createElement('div');
+    tooltip.classList.add(...['tw-tooltip', 'tw-tooltip--align-top', 'tw-tooltip--up']);
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.textContent = 'Twitch Chat Overlay';
 
-    const target = player.querySelector('.player-buttons-right');
+    const target = player.querySelector('.player-controls__right-control-group');
     if (target) {
       element.appendChild(icon);
       element.appendChild(tooltip);
@@ -355,27 +350,11 @@
     }
   }
 
-  // Look for the Twitch video player on the page. If it exists
-  // then we observe it for changes.
-  function findVideoPlayer() {
-    const timer = setInterval(function() {
-      // There may be multiple video players on a single page.
-      const elements = document.getElementsByClassName('video-player');
-      if (elements.length > 0) {
-        for (const element of elements) {
-          observer.observe(element, { attributes: true });
-        }
-        clearInterval(timer);
-      }
-    }, 500);
-    intervalIds.push(timer);
-  }
-
   // Get access to the React instance on Twitch
   let cleanupHistoryListener = null;
   function hookIntoReact() {
     // Watch for navigation changes within the React app
-    function reactNavigationHook(history) {
+    function reactNavigationHook({ history }) {
       let lastPathName = history.location.pathname;
       cleanupHistoryListener = history.listen(function(location) {
         if (location.pathname !== lastPathName) {
@@ -387,55 +366,70 @@
     }
 
     // Find a property within the React component tree
-    function findReactProp(node, prop, func) {
-      if (node.stateNode && node.stateNode.props && node.stateNode.props[prop]) {
-        func(node.stateNode.props[prop]);
-      } else if (node.child) {
-        let child = node.child;
-        while (child) {
-          findReactProp(child, prop, func);
-          child = child.sibling;
+    function findReactProp(node, props, func) {
+      for (let i = 0; i < props.length; i++) {
+        const prop = props[i];
+        if (node.stateNode && node.stateNode.props && node.stateNode.props[prop]) {
+          return func(node.stateNode.props);
+        } else if (node.child) {
+          let child = node.child;
+          while (child) {
+            findReactProp(child, [prop], func);
+            child = child.sibling;
+          }
         }
       }
     }
 
     // Find the react instance of a element
-    function findReactInstance(element, target, func) {
+    function findReactInstance(elements, target, func) {
       const timer = setInterval(function() {
-        const reactRoot = document.getElementById(element);
-        if (reactRoot) {
-          let reactInstance = null;
-          for (const key of Object.keys(reactRoot)) {
-            if (key.startsWith(target)) {
-              reactInstance = reactRoot[key];
-              break;
+        elements.forEach(element => {
+          const reactRoot = document.querySelector(element);
+          if (reactRoot) {
+            let reactInstance = null;
+            for (const key of Object.keys(reactRoot)) {
+              if (key.startsWith(target)) {
+                reactInstance = reactRoot[key];
+                break;
+              }
+            }
+            if (reactInstance) {
+              func(reactInstance);
+              clearInterval(timer);
             }
           }
-          if (reactInstance) {
-            func(reactInstance);
-            clearInterval(timer);
-          }
-        }
+        });
       }, 500);
       intervalIds.push(timer);
     }
 
     // Find the root instance and hook into the router history
-    findReactInstance('root', '_reactRootContainer', function(instance) {
+    findReactInstance(['#root'], '_reactRootContainer', function(instance) {
       if (instance._internalRoot && instance._internalRoot.current) {
-        findReactProp(instance._internalRoot.current, 'history', reactNavigationHook);
+        findReactProp(instance._internalRoot.current, ['history'], reactNavigationHook);
       }
     });
 
     // Find the instance related to the video player to find the current stream
-    findReactInstance('default-player', '__reactInternalInstance$', function(instance) {
-      findReactProp(instance, 'player', function(player) {
-        if (player.channel) {
-          currentChannel = player.channel;
-          findVideoPlayer();
-        }
+    const intervalId = setInterval(function() {
+      findReactInstance(['.highwind-video-player'], '__reactInternalInstance$', function(instance) {
+        findReactProp(instance, ['channelLogin'], function(object) {
+          if (object.channelLogin && 'isFullscreen' in object) {
+            currentChannel = object.channelLogin;
+            if (object.isFullscreen && !isFullscreen) {
+              isFullscreen = true;
+              const fsElement = document.querySelector('.highwind-video-player__overlay');
+              createChatOverlay(fsElement);
+            } else if (!object.isFullscreen && isFullscreen) {
+              isFullscreen = false;
+              destroyChatOverlay();
+            }
+          }
+        });
       });
-    });
+    }, 1000);
+    intervalIds.push(intervalId);
   }
 
   function start() {
