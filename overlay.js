@@ -4,7 +4,7 @@
   const OVERLAY_BUTTON_ID = "tco-ext-element-button";
   const STORAGE_KEY = "tco-ext:settings";
   const SVG_INNER =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 22"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    '<g><path d="M7.828 13L10 15.172 12.172 13H15V5H5v8h2.828zM10 18l-3-3H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2l-3 3z" fill-rule="evenodd" clip-rule="evenodd"></path></g>';
 
   // Utilities
   const utils = {
@@ -125,14 +125,26 @@
   // Add button to the player controls that can be used to toggle
   // the overlayed chat window
   function buildToggleControl(player, parent) {
-    const element = document.createElement("button");
-    element.classList.add(
-      ...["tw-inline-flex", "tw-relative", "tw-tooltip-wrapper"]
-    );
-    element.id = OVERLAY_BUTTON_ID;
-    element.type = "button";
-
-    // Toggle code
+    const element = document.createElement("div");
+    element.innerHTML = `
+      <div id="${OVERLAY_BUTTON_ID}" class="tw-inline-flex tw-relative tw-tooltip-wrapper">
+          <button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon tw-button-icon--overlay tw-core-button tw-core-button--overlay tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative" aria-label="Twitch Chat Overlay">
+            <span class="tw-button-icon__icon">
+              <div style="width: 2rem; height: 2rem;">
+                <div class="tw-align-items-center tw-full-width tw-icon tw-icon--fill tw-inline-flex">
+                  <div class="tw-aspect tw-aspect--align-top">
+                    <div class="tw-aspect__spacer" style="padding-bottom: 100%"></div>
+                    <svg class="tw-icon__svg" width="100%" height="100%" viewBox="0 0 20 20" x="0px" y="0px" version="1.1">
+                      ${SVG_INNER}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </span>
+          </button>
+        <div class="tw-tooltip tw-tooltip--align-right tw-tooltip--up" role="tooltip">Twitch Chat Overlay</div>
+      </div>
+    `;
     function onClick() {
       // Will only be undefined on first run, where settings aren't saved
       const state = parent.style.visibility || "visible";
@@ -142,26 +154,12 @@
         parent.style.visibility = "visible";
       }
     }
-    element.addEventListener("click", onClick);
-
-    // Icon
-    const icon = document.createElement("span");
-    icon.innerHTML = SVG_INNER;
-
-    // Tooltip
-    const tooltip = document.createElement("div");
-    tooltip.classList.add(
-      ...["tw-tooltip", "tw-tooltip--align-top", "tw-tooltip--up"]
-    );
-    tooltip.setAttribute("role", "tooltip");
-    tooltip.textContent = "Twitch Chat Overlay";
+    element.querySelector("button").addEventListener("click", onClick);
 
     const target = player.querySelector(
       ".player-controls__right-control-group"
     );
     if (target) {
-      element.appendChild(icon);
-      element.appendChild(tooltip);
       target.prepend(element);
     }
   }
