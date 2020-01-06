@@ -168,24 +168,25 @@
   function createSettingsMenu(parent, iframe) {
     function createButton(target, panel) {
       const dom = document.createElement("div");
-      dom.className = "tw-inline-flex tw-relative tw-tooltip-wrapper";
       dom.innerHTML = `
-        <div class="tw-z-above">
-          <button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-core-button tw-core-button--border tw-core-button--text tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative">
-            <div class="tw-align-items-center tw-flex tw-flex-grow-0">
-              <span class="tw-button-icon__icon"><div style="width: 2rem; height: 2rem;"><div class="tw-align-items-center tw-full-width tw-icon tw-icon--fill tw-inline-flex"><div class="tw-aspect tw-aspect--align-top"><div class="tw-aspect__spacer" style="padding-bottom: 100%;"></div>
-              ${SVG_INNER}
-              </div></div></div></span>
-            </div>
+        <div class="tw-inline-flex tw-relative tw-tooltip-wrapper">
+          <button class="tw-align-items-center tw-align-middle tw-border-bottom-left-radius-medium tw-border-bottom-right-radius-medium tw-border-top-left-radius-medium tw-border-top-right-radius-medium tw-button-icon tw-core-button tw-inline-flex tw-interactive tw-justify-content-center tw-overflow-hidden tw-relative" aria-label="Twitch Chat Overlay">
+            <span class="tw-button-icon__icon">
+              <div style="width: 2rem; height: 2rem;">
+                <div class="tw-align-items-center tw-full-width tw-icon tw-icon--fill tw-inline-flex">
+                  <div class="tw-aspect tw-aspect--align-top">
+                    <div class="tw-aspect__spacer" style="padding-bottom: 100%"></div>
+                    <svg class="tw-icon__svg" width="100%" height="100%" viewBox="0 0 20 20" x="0px" y="0px" version="1.1">
+                      ${SVG_INNER}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </span>
           </button>
+          <div class="tw-tooltip tw-tooltip--align-center tw-tooltip--right" role="tooltip">Twitch Chat Overlay</div>
         </div>
-        <div class="tw-tooltip tw-tooltip--align-left tw-tooltip--up" data-a-target="tw-tooltip-label" role="tooltip">Overlay Chat Settings</div>
       `;
-
-      const svg = dom.querySelector("svg");
-      svg.style = "fill: currentColor;";
-      svg.setAttribute("viewBox", "0 0 22 22");
-
       function toggle() {
         if (panel.classList.contains("tw-block")) {
           panel.classList.remove("tw-block");
@@ -195,9 +196,7 @@
           panel.classList.remove("tw-hide");
         }
       }
-      const button = dom.querySelector("button");
-      button.addEventListener("click", toggle);
-
+      dom.querySelector("button").addEventListener("click", toggle);
       target.appendChild(dom);
     }
 
