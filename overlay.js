@@ -229,7 +229,7 @@
         const btnAddAlpha = document.createElement("button");
         btnAddAlpha.innerText = "+";
         btnAddAlpha.style =
-          "padding: 2px 8px;background-color: #6441a4;margin: 1px;";
+          "padding: 2px 8px;background-color: #9146FF;margin: 1px;";
         btnAddAlpha.onclick = function(e) {
           e.stopPropagation();
           opacity = Math.min(100, opacity + 10);
@@ -239,7 +239,7 @@
         const btnMinusAlpha = document.createElement("button");
         btnMinusAlpha.innerText = "-";
         btnMinusAlpha.style =
-          "padding: 2px 8px;background-color: #6441a4;margin: 1px;";
+          "padding: 2px 8px;background-color: #9146FF;margin: 1px;";
         btnMinusAlpha.onclick = function(e) {
           e.stopPropagation();
           opacity = Math.max(10, opacity - 10);
