@@ -442,7 +442,7 @@
     // Find the instance related to the video player to find the current stream
     const intervalId = setInterval(function() {
       findReactInstance(
-        [".highwind-video-player"],
+        [".video-player__default-player"],
         "__reactInternalInstance$",
         function(instance) {
           findReactProp(instance, ["channelLogin"], function(object) {
@@ -451,7 +451,7 @@
               if (object.isFullscreen && !isFullscreen) {
                 isFullscreen = true;
                 const fsElement = document.querySelector(
-                  ".highwind-video-player__overlay"
+                  ".video-player__overlay"
                 );
                 createChatOverlay(fsElement);
               } else if (!object.isFullscreen && isFullscreen) {
