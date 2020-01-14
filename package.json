@@ -1,6 +1,6 @@
 {
   "name": "twitch-chat-overlay",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Overlays the Twitch chat while in fullscreen",
   "main": "main.js",
   "private": true,
