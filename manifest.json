@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Twitch Chat Overlay",
   "description": "Overlay the Twitch chat when in fullscreen mode.",
-  "version": "1.9",
+  "version": "1.10",
   "homepage_url": "https://github.com/trmcnvn/twitch-chat-overlay",
 
   "icons": {
