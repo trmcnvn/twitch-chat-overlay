@@ -15,28 +15,28 @@ jobs:
       - run: npm run build
       - uses: actions/upload-artifact@v1
         with:
-          name: twitch-chat-overlay.zip
-          path: build/twitch-chat-overlay.zip
+          name: twitch-chat-overlay
+          path: build
   publish:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v1
         with:
-          name: twitch-chat-overlay.zip
+          name: twitch-chat-overlay
+          path: build
       - uses: trmcnvn/firefox-addon@v1
         with:
           uuid: "{7b312f5e-9680-436b-acc1-9b09f60e8aaa}"
-          xpi: twitch-chat-overlay.zip
+          xpi: build/twitch-chat-overlay.zip
           manifest: "manifest.json"
           api-key: ${{ secrets.FIREFOX_API_KEY }}
           api-secret: ${{ secrets.FIREFOX_API_SECRET }}
-        continue-on-error: true
       - uses: trmcnvn/chrome-addon@master
         with:
           extension: lcljofkmbcdnjekeamikmefcjohmhgng
-          zip: twitch-chat-overlay.zip
+          zip: build/twitch-chat-overlay.zip
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
-        continue-on-error: true
