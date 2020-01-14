@@ -80,6 +80,15 @@
       if (isDragging) {
         requestAnimationFrame(dragUpdate);
       }
+      // Limit to the boundaries
+      if (
+        transformX <= 0 ||
+        transformX + parent.clientWidth >= window.innerWidth ||
+        transformY <= 0 ||
+        transformY + parent.clientHeight >= window.innerHeight
+      ) {
+        return;
+      }
       parent.style.transform = `translate(${transformX}px, ${transformY}px)`;
     }
 
